@@ -269,7 +269,13 @@ class TradingEnv(gym.Env):
         if done or truncated:
             self.calculate_metrics()
             self.log()
-        return self._get_obs(),  self.historical_info["reward", -1], done, truncated, self.historical_info[-1]
+        
+        info = self.historical_info[-1]
+        portfolio_return = self.historical_info["portfolio_valuation", -1] / self.historical_info["portfolio_valuation", 0] - 1
+        market_return = self.historical_info["data_close", -1] / self.historical_info["data_close", 0] - 1
+        info["Agent performance"] = 100 * (portfolio_return - market_return)
+
+        return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
     def add_metric(self, name, function):
         self.log_metrics.append({
