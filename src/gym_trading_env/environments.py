@@ -269,7 +269,13 @@ class TradingEnv(gym.Env):
         if done or truncated:
             self.calculate_metrics()
             self.log()
-        return self._get_obs(),  self.historical_info["reward", -1], done, truncated, self.historical_info[-1]
+        
+        info = self.historical_info[-1]
+        portfolio_return = self.historical_info["portfolio_valuation", -1] / self.historical_info["portfolio_valuation", 0] - 1
+        market_return = self.historical_info["data_close", -1] / self.historical_info["data_close", 0] - 1
+        info["Agent performance"] = 100 * (portfolio_return - market_return)
+
+        return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
     def add_metric(self, name, function):
         self.log_metrics.append({
@@ -383,7 +389,7 @@ class MultiDatasetTradingEnv(TradingEnv):
         potential_dataset_pathes = np.where(self.dataset_nb_uses == self.dataset_nb_uses.min())[0]
         # Pick one of them
         random_int = np.random.choice(potential_dataset_pathes)
-        dataset_idx = potential_dataset_pathes[ random_int ]
+        dataset_idx = potential_dataset_pathes[random_int]
         dataset_path = self.dataset_pathes[dataset_idx]
         self.dataset_nb_uses[dataset_idx] += 1 # Update nb use counts
 
