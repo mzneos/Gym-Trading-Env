@@ -388,8 +388,7 @@ class MultiDatasetTradingEnv(TradingEnv):
         # Find the indexes of the less explored dataset
         potential_dataset_pathes = np.where(self.dataset_nb_uses == self.dataset_nb_uses.min())[0]
         # Pick one of them
-        random_int = np.random.choice(potential_dataset_pathes)
-        dataset_idx = potential_dataset_pathes[random_int]
+        dataset_idx = np.random.choice(potential_dataset_pathes)
         dataset_path = self.dataset_pathes[dataset_idx]
         self.dataset_nb_uses[dataset_idx] += 1 # Update nb use counts
 
