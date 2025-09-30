@@ -273,10 +273,15 @@ class TradingEnv(gym.Env):
             self.log()
 
             for key, value in self.results_metrics.items():
-                if type(value) in [int, float]:
+                if isinstance(value, (np.integer, int, float)):
                     info[key] = value
+                elif isinstance(value, str):
+                    try:
+                        info[key] = float(value.replace("%", "e-2"))
+                    except ValueError:
+                        print(f"Metric {key} is a string that cannot be converted to a float. It will not be added to the info object.\nValue: {value}")
                 else:
-                    info[key] = float(value.replace("%", "e-2"))
+                    print(f"Metric {key} is neither a string or a number. It will not be added to the info.\nValue: {value}")
 
         return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
