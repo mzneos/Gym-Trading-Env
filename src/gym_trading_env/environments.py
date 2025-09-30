@@ -272,7 +272,10 @@ class TradingEnv(gym.Env):
         
         info = self.historical_info[-1]
         for key, value in self.results_metrics.items():
-            info[key] = float(value.replace("%", "e-2"))
+            if type(value) in [int, float]:
+                info[key] = value
+            else:
+                info[key] = float(value.replace("%", "e-2"))
 
         return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
