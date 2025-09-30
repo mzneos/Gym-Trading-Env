@@ -266,16 +266,17 @@ class TradingEnv(gym.Env):
             reward = self.reward_function(self.historical_info)
             self.historical_info["reward", -1] = reward
 
+        info = self.historical_info[-1]
+
         if done or truncated:
             self.calculate_metrics()
             self.log()
-        
-        info = self.historical_info[-1]
-        for key, value in self.results_metrics.items():
-            if type(value) in [int, float]:
-                info[key] = value
-            else:
-                info[key] = float(value.replace("%", "e-2"))
+
+            for key, value in self.results_metrics.items():
+                if type(value) in [int, float]:
+                    info[key] = value
+                else:
+                    info[key] = float(value.replace("%", "e-2"))
 
         return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
