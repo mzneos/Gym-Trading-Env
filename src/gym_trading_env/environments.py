@@ -271,9 +271,8 @@ class TradingEnv(gym.Env):
             self.log()
         
         info = self.historical_info[-1]
-        portfolio_return = self.historical_info["portfolio_valuation", -1] / self.historical_info["portfolio_valuation", 0] - 1
-        market_return = self.historical_info["data_close", -1] / self.historical_info["data_close", 0] - 1
-        info["Agent performance"] = 100 * (portfolio_return - market_return)
+        for key, value in self.results_metrics.items():
+            info[key] = float(value.replace("%", "e-2"))
 
         return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
