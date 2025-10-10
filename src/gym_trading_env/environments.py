@@ -266,14 +266,22 @@ class TradingEnv(gym.Env):
             reward = self.reward_function(self.historical_info)
             self.historical_info["reward", -1] = reward
 
+        info = self.historical_info[-1]
+
         if done or truncated:
             self.calculate_metrics()
             self.log()
-        
-        info = self.historical_info[-1]
-        portfolio_return = self.historical_info["portfolio_valuation", -1] / self.historical_info["portfolio_valuation", 0] - 1
-        market_return = self.historical_info["data_close", -1] / self.historical_info["data_close", 0] - 1
-        info["Agent performance"] = 100 * (portfolio_return - market_return)
+
+            for key, value in self.results_metrics.items():
+                if isinstance(value, (np.integer, int, float)):
+                    info[key] = value
+                elif isinstance(value, str):
+                    try:
+                        info[key] = float(value.replace("%", "e-2"))
+                    except ValueError:
+                        print(f"Metric {key} is a string that cannot be converted to a float. It will not be added to the info object.\nValue: {value}")
+                else:
+                    print(f"Metric {key} is neither a string or a number. It will not be added to the info.\nValue: {value}")
 
         return self._get_obs(),  self.historical_info["reward", -1], done, truncated, info
 
