@@ -171,6 +171,7 @@ class TradingEnv(gym.Env):
             _step_index = np.arange(self._idx + 1 - self.windows , self._idx + 1)
 
         _current_window = self._obs_array[_step_index]
+        print(f"Before per window features:\n{_current_window}")
 
         if len(self.per_window_dynamic_feature_functions) != 0:
             _per_window_feature_index = self._nb_static_features + len(self.dynamic_feature_functions)
@@ -178,6 +179,8 @@ class TradingEnv(gym.Env):
             for nb_feature, feature_function in self.per_window_dynamic_feature_functions:
                 _current_window[:, _per_window_feature_index + nb_feature] = feature_function(_window_dataframe)
                 _per_window_feature_index += nb_feature
+        
+        print(f"After per window features:\n{_current_window}")
 
         return _current_window
 
