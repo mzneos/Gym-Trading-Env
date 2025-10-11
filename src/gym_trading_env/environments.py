@@ -177,7 +177,7 @@ class TradingEnv(gym.Env):
             _per_window_feature_index = self._nb_static_features + len(self.dynamic_feature_functions)
             _window_dataframe = self.df.iloc[_step_index]
             for nb_feature, feature_function in self.per_window_dynamic_feature_functions:
-                _current_window[:, _per_window_feature_index + nb_feature] = feature_function(_window_dataframe)
+                _current_window[:, _per_window_feature_index:_per_window_feature_index + nb_feature] = feature_function(_window_dataframe)
                 _per_window_feature_index += nb_feature
         
         print(f"After per window features:\n{_current_window}")
