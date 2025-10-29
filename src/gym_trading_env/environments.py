@@ -45,7 +45,10 @@ class TradingEnv(gym.Env):
         * the last position taken by the agent.
         * the real position of the portfolio (that varies according to the price fluctuations)
 
-    :type dynamic_feature_functions: optional - list   
+    :type dynamic_feature_functions: optional - list
+
+    :param per_window_dynamic_feature_functions: list of tuple of (nb_features_added, dynamic feature function). These dynamic feature functions should return the features values for the whole window, and are evaluated at each step. Multiple features can be returned by a single function.
+    :type per_window_dynamic_feature_functions: optional - list[tuple(int, function<pd.DataFrame->np.ndarray>)]
 
     :param reward_function: Take the History object of the environment and must return a float.
     :type reward_function: optional - function<History->float>
@@ -80,6 +83,7 @@ class TradingEnv(gym.Env):
                 df : pd.DataFrame,
                 positions : list = [0, 1],
                 dynamic_feature_functions = [dynamic_feature_last_position_taken, dynamic_feature_real_position],
+                per_window_dynamic_feature_functions = [],
                 reward_function = basic_reward_function,
                 windows = None,
                 trading_fees = 0,
@@ -97,6 +101,7 @@ class TradingEnv(gym.Env):
 
         self.positions = positions
         self.dynamic_feature_functions = dynamic_feature_functions
+        self.per_window_dynamic_feature_functions = per_window_dynamic_feature_functions
         self.reward_function = reward_function
         self.windows = windows
         self.trading_fees = trading_fees
@@ -137,8 +142,15 @@ class TradingEnv(gym.Env):
             self._features_columns.append(f"dynamic_feature__{i}")
             self._nb_features += 1
 
+        nb_per_window_dynamic_features = 0
+        for nb_feature, _ in self.per_window_dynamic_feature_functions:
+            nb_per_window_dynamic_features += nb_feature
+        self._nb_features += nb_per_window_dynamic_features
+
         self.df = df
-        self._obs_array = np.array(self.df[self._features_columns], dtype= np.float32)
+        rolling_window_features = np.array(self.df[self._features_columns], dtype= np.float32)
+        per_window_features = np.zeros((len(df), nb_per_window_dynamic_features))
+        self._obs_array = np.concatenate([rolling_window_features, per_window_features], axis=1)
         self._info_array = np.array(self.df[self._info_columns])
         self._price_array = np.array(self.df["close"])
 
@@ -157,7 +169,17 @@ class TradingEnv(gym.Env):
             _step_index = self._idx
         else: 
             _step_index = np.arange(self._idx + 1 - self.windows , self._idx + 1)
-        return self._obs_array[_step_index]
+
+        _current_window = self._obs_array[_step_index]
+
+        if len(self.per_window_dynamic_feature_functions) != 0:
+            _per_window_feature_index = self._nb_static_features + len(self.dynamic_feature_functions)
+            _window_dataframe = self.df.iloc[_step_index]
+            for nb_feature, feature_function in self.per_window_dynamic_feature_functions:
+                _current_window[:, _per_window_feature_index:_per_window_feature_index + nb_feature] = feature_function(_window_dataframe)
+                _per_window_feature_index += nb_feature
+
+        return _current_window
 
     
     def reset(self, seed = None, options=None, **kwargs):
