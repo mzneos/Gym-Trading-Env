@@ -417,8 +417,15 @@ class MultiDatasetTradingEnv(TradingEnv):
         self._episodes_on_this_dataset = 0
         # Find the indexes of the less explored dataset
         potential_dataset_pathes = np.where(self.dataset_nb_uses == self.dataset_nb_uses.min())[0]
+
         # Pick one of them
-        dataset_idx = np.random.choice(potential_dataset_pathes)
+        if hasattr(self, 'action_space'):
+            # env has already been initialized with a seed
+            dataset_idx = self.action_space._np_random.choice(potential_dataset_pathes)
+        else:
+            # pick the first item, it's not going to be used anyway
+            # as next_dataset() is called another before the env is used
+            dataset_idx = 0
         dataset_path = self.dataset_pathes[dataset_idx]
         self.dataset_nb_uses[dataset_idx] += 1 # Update nb use counts
 
